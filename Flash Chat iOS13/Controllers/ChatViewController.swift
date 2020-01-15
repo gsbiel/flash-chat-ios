@@ -26,6 +26,8 @@ class ChatViewController: UIViewController {
         tableView.dataSource = self
         title = Constants.appName
         navigationItem.hidesBackButton = true
+        
+        tableView.register(UINib(nibName: Constants.cellNibName, bundle: nil), forCellReuseIdentifier: Constants.cellIdentifier)
 
     }
     
@@ -55,8 +57,8 @@ extension ChatViewController: UITableViewDataSource {
     
     // Esse metodo e chamado pelo TableView. Este, espera que o metodo retorne um TableViewCell para inserir na tabela.
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: Constants.cellIdentifier, for: indexPath)
-        cell.textLabel?.text = messages[indexPath.row].body
+        let cell = tableView.dequeueReusableCell(withIdentifier: Constants.cellIdentifier, for: indexPath) as! MessageCell
+        cell.messageLabel.text = messages[indexPath.row].body
         return cell
     }
 }
