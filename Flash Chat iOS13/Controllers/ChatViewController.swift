@@ -17,7 +17,7 @@ class ChatViewController: UIViewController {
     // Crio uma referencia para o banco de dados
     let db = Firestore.firestore()
     
-    let messages : [Message] = [
+    var messages : [Message] = [
         Message(sender: "1@2.com", body: "Hello!"),
         Message(sender: "a@b.com", body: "Heey!"),
         Message(sender: "1@2.com", body: "How's it going?")
@@ -31,7 +31,34 @@ class ChatViewController: UIViewController {
         navigationItem.hidesBackButton = true
         
         tableView.register(UINib(nibName: Constants.cellNibName, bundle: nil), forCellReuseIdentifier: Constants.cellIdentifier)
-
+        
+        loadMessages()
+    }
+    
+    func loadMessages() {
+        messages = []
+        db.collection(Constants.FStore.collectionName).getDocuments { (querySnapshot, error) in
+            if let e = error {
+                print("There was an issue retrieving data from the FireStore. \(e)")
+            }else {
+                if let snapshotDocuments = querySnapshot?.documents {
+                    for doc in snapshotDocuments {
+                        let data = doc.data()
+                        // Note o DownCasting, pois o valor do par chave:valor e do tipo "any". E queremos um String.
+                        if let messageSender =  data[Constants.FStore.senderField] as? String, let messageBody = data[Constants.FStore.bodyField] as? String {
+                            let newMessage = Message(sender: messageSender, body: messageBody)
+                            self.messages.append(newMessage)
+                            
+                            DispatchQueue.main.async {
+                                // Esse metodo e muito importante. Assim que a tela de chat carrega, os dados que preencherao a tabela possivelmente ainda nao estarao prontos, pois isso vai depender da velocidade da conexao. Entao, assim que o clojure for chamado e o array messages for preenchido, deve-se entao chamar o metodo para recarregar os dados da tabela.
+                                // Como estamos dentro de um clojure, que e assincrono, e queremos alterar um elemento UI, temos que fazer isso dentro de uma fila de requisicoes! DispatchQueue.main.async
+                                self.tableView.reloadData()
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
     
     @IBAction func sendPressed(_ sender: UIButton) {
@@ -43,6 +70,7 @@ class ChatViewController: UIViewController {
                     print("There was an issue saving data to firestore. \(e)")
                 }else {
                     print("Successfully saved data")
+                    self.loadMessages()
                 }
             }
         }
