@@ -55,6 +55,9 @@ class ChatViewController: UIViewController {
                                 // Esse metodo e muito importante. Assim que a tela de chat carrega, os dados que preencherao a tabela possivelmente ainda nao estarao prontos, pois isso vai depender da velocidade da conexao. Entao, assim que o clojure for chamado e o array messages for preenchido, deve-se entao chamar o metodo para recarregar os dados da tabela.
                                 // Como estamos dentro de um clojure, que e assincrono, e queremos alterar um elemento UI, temos que fazer isso dentro de uma fila de requisicoes! DispatchQueue.main.async
                                 self.tableView.reloadData()
+                                
+                                let indexPath = IndexPath(row: self.messages.count - 1, section: 0)
+                                self.tableView.scrollToRow(at: indexPath, at: .top, animated: true)
                             }
                         }
                     }
@@ -77,6 +80,11 @@ class ChatViewController: UIViewController {
                 }else {
                     print("Successfully saved data")
                     self.loadMessages()
+                    
+                    DispatchQueue.main.async {
+                        self.messageTextfield.text = ""
+                    }
+                    
                 }
             }
         }
@@ -105,8 +113,23 @@ extension ChatViewController: UITableViewDataSource {
     
     // Esse metodo e chamado pelo TableView. Este, espera que o metodo retorne um TableViewCell para inserir na tabela.
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let message = messages[indexPath.row]
+        
         let cell = tableView.dequeueReusableCell(withIdentifier: Constants.cellIdentifier, for: indexPath) as! MessageCell
-        cell.messageLabel.text = messages[indexPath.row].body
+        cell.messageLabel.text = message.body
+        
+        
+        if message.sender == Auth.auth().currentUser?.email {
+            cell.leftImageView.isHidden = true
+            cell.rightImageView.isHidden = false
+            cell.messageBuble.backgroundColor = UIColor(named: Constants.BrandColors.lightPurple)
+            cell.messageLabel.textColor = UIColor(named: Constants.BrandColors.purple)
+        }else {
+            cell.leftImageView.isHidden = false
+            cell.rightImageView.isHidden = true
+        }
+        
+        
         return cell
     }
 }
